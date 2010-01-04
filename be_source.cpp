@@ -16,11 +16,11 @@ int main()
   fp2=fopen(OUTFILE,"wb");
 
 
-  errcode=fread(pbmfh->bfType,sizeof(pbmfh->bfType),1,fp1);
-  errcode=fread(pbmfh->bfSize,sizeof(pbmfh->bfSize),1,fp1);
-  errcode=fread(pbmfh->bfReserved1,sizeof(pbmfh->bfReserved1),1,fp1);
-  errcode=fread(pbmfh->bfReserved2,sizeof(pbmfh->bfReserved2),1,fp1);
-  errcode=fread(pbmfh->bfOffsetBits,sizeof(pbmfh->bfOffsetBits),1,fp1);
+  fread(pbmfh->bfType,sizeof(pbmfh->bfType),1,fp1);
+  fread(pbmfh->bfSize,sizeof(pbmfh->bfSize),1,fp1);
+  fread(pbmfh->bfReserved1,sizeof(pbmfh->bfReserved1),1,fp1);
+  fread(pbmfh->bfReserved2,sizeof(pbmfh->bfReserved2),1,fp1);
+  fread(pbmfh->bfOffsetBits,sizeof(pbmfh->bfOffsetBits),1,fp1);
 
   printf("%d",pbmfh->bfType);
 
