@@ -1,7 +1,8 @@
 #include "be_header.h"
+#include<getopt.h>
 
 
-struct image
+typedef struct imagefile
 {
   DWORD imSize;
   LONG imWidth;
@@ -10,4 +11,4 @@ struct image
   WORD imBitsPerPixel;
   DWORD imOffset;
   FILE *imData;
-};
+}image;
