@@ -2,7 +2,6 @@
 #include <malloc.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #define MASKSIZE 3
 
 typedef unsigned long DWORD;
@@ -47,9 +46,9 @@ typedef struct tagBITMAPINFOHEADER
 
 typedef struct tagRGBTRIPLE
 {
-  BYTE rgbtBlue;
-  BYTE rgbtGreen;
-  BYTE rgbtRed;
+  int rgbtBlue:8;
+  int rgbtGreen:8;
+  int rgbtRed:8;
 }
   RGBTRIPLE,*PRGBTRIPLE;
 
