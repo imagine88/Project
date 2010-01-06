@@ -1,5 +1,5 @@
 #include "be_header.h"
-#include<getopt.h>
+
 
 
 typedef struct imagefile
@@ -10,5 +10,6 @@ typedef struct imagefile
   WORD imType;
   WORD imBitsPerPixel;
   DWORD imOffset;
-  FILE *imData;
+  char* imRawData;
+  char * imName;
 }image;

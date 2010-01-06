@@ -47,9 +47,9 @@ typedef struct tagBITMAPINFOHEADER
 
 typedef struct tagRGBTRIPLE
 {
-  BYTE rgbtBlue;
-  BYTE rgbtGreen;
-  BYTE rgbtRed;
+  BYTE rgbtBlue ;
+  BYTE rgbtGreen ;
+  BYTE rgbtRed ;
 }
   RGBTRIPLE,*PRGBTRIPLE;
 

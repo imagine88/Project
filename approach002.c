@@ -1,28 +1,14 @@
 #include "approach002.h"
 
-int fileopen(image *,image *,char **);
+
 int process(image *,image *,char **);
 int imagecopy(image *,image *,char **);
-/*int convgs(image*,image*);
+
+int convgs(image*,image*,char**);
+/*
 int logtx(image*,image*);
 int gammatx(image*,image*);*/
 
-
-
-
-int fileopen(image* inImage,image* outImage,char **argv)
-{
-  /*if((inImage->imData=fopen(*argv+1,"rb"))==NULL)
-    {
-      return 1;
-    }
-  if((outImage->imData=fopen(*argv+2,"wb"))==NULL)
-    {
-      return 1;
-      }*/
-  printf("%c",(*argv[optind++]));
-  return 0;
-}
 
 int process(image* inImage,image* outImage,char** argv)
 {
@@ -41,13 +27,13 @@ int process(image* inImage,image* outImage,char** argv)
 	      return 1;
 	    }
 	  break;
-	  /*case 2:
-	  if((err=convgs(inImage,outImage))==1)
+	  case 2:
+	    if((err=convgs(inImage,outImage,argv))==1)
 	    {
 	      return 1;
 	    }
 	  break;
-	case 3:
+	  /*case 3:
 	  if((err=logtx(inImage,outImage))==1)
 	    {
 	      return 1;
@@ -60,47 +46,117 @@ int process(image* inImage,image* outImage,char** argv)
 	    }
 	    break;*/
 	default:
-	  printf("Re-enter Choice\n");
+	  if(choice==5)
+	    return 5;
+	  else
+	    printf("Re-enter Choice\n");
+
 	}
     }while(choice!=5);
  
  return 0;
 }
 
-int imagecopy(image* inImage,image* outImage,char** argv)
+
+int convgs(image* inImage,image* outImage,char** argv)
 {
-  PBITMAPFILEHEADER bmfh;
-  PBITMAPINFOHEADER bmih;
-  PRGBTRIPLE pPixel;
+  BITMAPFILEHEADER bmfh;
+  BITMAPINFOHEADER bmih;
+  RGBTRIPLE pixel;
   int i,j,err;
-
-  if((err=fileopen(inImage,outImage,argv))!=0);
-  {
-    printf("\nFile: %s could not be opened\n",*argv+1);
-    return 1;
-  }
-
-  fread(bmfh,sizeof(BITMAPFILEHEADER),1,inImage->imData);
-  inImage->imType=outImage->imType=bmfh->bfSize;
-  inImage->imOffset=outImage->imOffset=bmfh->bfOffsetBits;
-
-  fread(bmih,sizeof(BITMAPINFOHEADER),1,inImage->imData);
-  inImage->imSize=outImage->imSize=bmih->biSize;
-  inImage->imWidth=outImage->imWidth=bmih->biWidth;
-  inImage->imHeight=outImage->imHeight=bmih->biHeight;
-  inImage->imBitsPerPixel=outImage->imBitsPerPixel=bmih->biBitCount;
+  FILE* fp1;
+  FILE* fp2;
+  fp1=fopen(argv[1],"rb");
+  fp2=fopen(argv[2],"wb");
   
-  fwrite(bmfh,sizeof(BITMAPFILEHEADER),1,outImage->imData);
-  fwrite(bmih,sizeof(BITMAPINFOHEADER),1,outImage->imData);
 
+  inImage->imName=argv[1];
+  outImage->imName=argv[2];
+  
+  fread((BYTE *)&bmfh,sizeof(BITMAPFILEHEADER),1,fp1);
+  inImage->imType=outImage->imType=bmfh.bfSize;
+  inImage->imOffset=outImage->imOffset=bmfh.bfOffsetBits;
+  printf("%x\n",bmfh.bfType);
+
+  fread((BYTE *)&bmih,sizeof(BITMAPINFOHEADER),1,fp1);
+  inImage->imSize=bmfh.bfSize;
+  inImage->imWidth=outImage->imWidth=bmih.biWidth;
+  inImage->imHeight=outImage->imHeight=bmih.biHeight;
+  inImage->imBitsPerPixel=outImage->imBitsPerPixel=bmih.biBitCount;
+  outImage->imSize=inImage->imWidth * inImage->imHeight ;
+  
+
+  printf("%ld\n",bmih.biWidth);
+
+  fwrite((BYTE *)&bmfh,sizeof(BITMAPFILEHEADER),1,fp2);
+  fwrite((BYTE *)&bmih,sizeof(BITMAPINFOHEADER),1,fp2);
+
+  fseek(fp1,0,SEEK_SET+(inImage->imOffset));
+  fseek(fp2,0,SEEK_SET+(outImage->imOffset));
   for(i=0;i<inImage->imHeight;i++)
     {
       for(j=0;j<inImage->imWidth;j++)
 	{
-	  fread(pPixel,1,sizeof(RGBTRIPLE),inImage->imData);
-	  fwrite(pPixel,1,sizeof(RGBTRIPLE),outImage->imData);
+	  fread((BYTE *)&pixel,1,sizeof(RGBTRIPLE),fp1);
+	  pixel.rgbtBlue=pixel.rgbtRed=pixel.rgbtRed=((pixel.rgbtRed) + (pixel.rgbtGreen) + (pixel.rgbtBlue))/3;
+	  fwrite((BYTE *)&pixel,1,sizeof(RGBTRIPLE),fp2);
 	}
     }
+  fclose(fp1);
+  fclose(fp2);
+  return 0;
+}
+
+	  
+
+  
+int imagecopy(image* inImage,image* outImage,char** argv)
+{
+  BITMAPFILEHEADER bmfh;
+  BITMAPINFOHEADER bmih;
+  RGBTRIPLE pixel;
+  int i,j,err;
+  FILE* fp1;
+  FILE* fp2;
+  fp1=fopen(argv[1],"rb");
+  fp2=fopen(argv[2],"wb");
+  
+
+  inImage->imName=argv[1];
+  outImage->imName=argv[2];
+  
+  fread((BYTE *)&bmfh,sizeof(BITMAPFILEHEADER),1,fp1);
+  inImage->imType=outImage->imType=bmfh.bfSize;
+  inImage->imOffset=outImage->imOffset=bmfh.bfOffsetBits;
+  printf("%x\n",bmfh.bfType);
+
+  fread((BYTE *)&bmih,sizeof(BITMAPINFOHEADER),1,fp1);
+  inImage->imSize=outImage->imSize=bmih.biSize;
+  inImage->imWidth=outImage->imWidth=bmih.biWidth;
+  inImage->imHeight=outImage->imHeight=bmih.biHeight;
+  inImage->imBitsPerPixel=outImage->imBitsPerPixel=bmih.biBitCount;
+  printf("%ld\n",bmih.biWidth);
+
+  fwrite((BYTE *)&bmfh,sizeof(BITMAPFILEHEADER),1,fp2);
+  fwrite((BYTE *)&bmih,sizeof(BITMAPINFOHEADER),1,fp2);
+
+  fseek(fp1,0,SEEK_SET+(inImage->imOffset));
+  fseek(fp2,0,SEEK_SET+(outImage->imOffset));
+
+
+  for(i=0;i<inImage->imHeight;i++)
+    {
+      
+      for(j=0;j<inImage->imWidth;j++)
+	{
+	  fread((BYTE *)&pixel,1,(sizeof(RGBTRIPLE)),fp1);
+	  fwrite((BYTE *)&pixel,1,(sizeof(RGBTRIPLE)),fp2);
+	}
+    }
+  
+  fclose(fp1);
+  fclose(fp2);
+
   return 0;
 }
                
@@ -108,24 +164,28 @@ int imagecopy(image* inImage,image* outImage,char** argv)
 
 int main(int argc,char **argv)
 {
-  image* inImage;
-  image* outImage;
+  image inImage;
+  image outImage;
   int err;
+  FILE* fp1;
+  FILE* fp2;
 
-  if(argc==1 || argc<2)
+  
+  if(argc!=3)
     {
-      printf("Insufficient arguments\nUsage:./progname infile outfile");
+      printf("Insufficient arguments\nUsage:./progname infile\n");
       exit(1);
     }
 
  
-
-  if((err=process(inImage,outImage,argv))!=0);
+  
+  if((err=process(&inImage,&outImage,argv))!=0);
   {
-    printf("\nUnexpected Result\n");
+    if(err!=5)
+      printf("\nUnexpected Result\n");
     exit(1);
   }
-
+  
   return 0;
 }
 

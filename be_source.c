@@ -4,7 +4,7 @@
 
 
 
-#define INFILE "o.bmp"
+#define INFILE "o4.bmp"
 #define OUTFILE "p.bmp"
 #define OUTFILE2 "q.bmp"
 
