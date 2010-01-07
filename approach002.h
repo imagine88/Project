@@ -2,6 +2,7 @@
 
 
 
+
 typedef struct imagefile
 {
   DWORD imSize;
