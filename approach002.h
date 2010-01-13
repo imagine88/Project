@@ -11,6 +11,6 @@ typedef struct imagefile
   WORD imType;
   WORD imBitsPerPixel;
   DWORD imOffset;
-  char* imRawData;
-  char * imName;
+
+  BYTE * imName;
 }image;
