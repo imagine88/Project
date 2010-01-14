@@ -4,8 +4,8 @@
 int process(image *,image *,char **);
 int imagecopy(image *,image *,char **);
 int median(image* ,image* ,char** );
-BYTE proc(BYTE** ,int ,int );
-BYTE mediansort(BYTE** ,char* ,int );
+RGBTRIPLE proc(RGBTRIPLE** ,int ,int ,int);
+RGBTRIPLE mediansort(RGBTRIPLE** ,RGBTRIPLE* ,int );
 int convgs(image*,image*,char**);
 
 int logtx(image*,image*,char**);
@@ -59,7 +59,7 @@ int process(image* inImage,image* outImage,char** argv)
 	    printf("Re-enter Choice\n");
 
 	}
-    }while(choice!=5);
+    }while(choice!=6);
  
  return 0;
 }
@@ -69,17 +69,16 @@ int median(image* inImage,image* outImage,char** argv)
   BITMAPFILEHEADER bmfh;
   BITMAPINFOHEADER bmih;
   RGBTRIPLE pixel;
-  int i,j,err;
+  int i,j,err,masksize;
   FILE* fp1;
   FILE* fp2;
-  BYTE** imRedData;
-  BYTE** imGreenData;
-  BYTE** imBlueData;
+  RGBTRIPLE** imRawData;
 
   fp1=fopen(argv[1],"rb");
   fp2=fopen(argv[2],"wb");
 
-  
+  printf("Enter mask size:");
+  scanf("%d",&masksize);
 
   inImage->imName=argv[1];
   outImage->imName=argv[2];
@@ -105,82 +104,77 @@ int median(image* inImage,image* outImage,char** argv)
   fseek(fp1,0,SEEK_SET+(inImage->imOffset));
   fseek(fp2,0,SEEK_SET+(outImage->imOffset));
 
-  imRedData=imGreenData=imBlueData=(BYTE **)farcalloc((inImage->imHeight) + 2,sizeof(BYTE));
-  printf("\n%ld\n",(inImage->imHeight)+2);
-  for(i=-1;i<=(inImage->imHeight +1);i++)
+  imRawData=(RGBTRIPLE **)malloc(((inImage->imHeight)+2) * sizeof(RGBTRIPLE *));
+  
+  
+  
+  for(i=0;i<=( (inImage->imHeight) +2);i++)
     {
-      imRedData[i]=imGreenData[i]=imBlueData[i]=(BYTE *)farcalloc((inImage->imWidth) +2,sizeof(BYTE));
+      imRawData[i]=(RGBTRIPLE *)malloc(((inImage->imWidth)+2) * sizeof(RGBTRIPLE));
     }
  
 
-  for(i=-1;i<=inImage->imHeight+1;i++)
+  for(i=0;i<=( (inImage->imHeight) + 2 );i++)
     {
-      for(j=-1;j<=inImage->imWidth+1;j++)
+      for(j=0;j<=((inImage->imWidth)+2);j++)
 	{    
-	  if((i==-1 || i==((inImage->imHeight)+1) || j==-1 || j==((inImage->imWidth)+1)))
+	  if(((i==0 || i==((inImage->imHeight)+2))))
 	    {
-	      imRedData[i][j]='0';
-	      imGreenData[i][j]='0';
-	      imBlueData[i][j]='0';
+	      imRawData[i][j].rgbtRed=imRawData[i][j].rgbtGreen=imRawData[i][j].rgbtBlue=0;
+	    }
+	  else if(((j==0 || j==((inImage->imWidth)+2))))
+	    {
+	      imRawData[i][j].rgbtRed=imRawData[i][j].rgbtGreen=imRawData[i][j].rgbtBlue=0;
 	    }
 	  else
 	    {
 	      fread((BYTE *)&pixel,1,sizeof(RGBTRIPLE),fp1);
-	      (imRedData)[i][j]=(pixel.rgbtRed);
-	      (imGreenData)[i][j]=(pixel.rgbtGreen);
-	      (imBlueData)[i][j]=(pixel.rgbtBlue);
+	      (imRawData)[i][j]=pixel;
 	    }
 
 	}
     }
-  for(i=0;i<=inImage->imHeight;i++)
+  for(i=1;i<=(inImage->imHeight)+1;i++)
     {
-      for(j=0;j<inImage->imWidth;j++)
+      for(j=1;j<=(inImage->imWidth)+1;j++)
 	{
-	  pixel.rgbtRed= proc(imRedData,i,j);
-	  pixel.rgbtGreen=proc(imGreenData,i,j);
-	  pixel.rgbtBlue=proc(imBlueData,i,j);
+	  pixel= proc(imRawData,i,j,masksize);
 	  fwrite((BYTE *)&pixel,1,sizeof(RGBTRIPLE),fp2);
 	}
     }
   for(i=0;i<((inImage->imHeight) + 2);i++)
     {
-      free((imRedData)[i]);
-      free((imGreenData)[i]);
-      free((imBlueData)[i]);
+      free((imRawData)[i]);
     }
-  free((imRedData));
-  free((imGreenData));
-  free((imBlueData));
+  free((imRawData));
   fclose(fp1);
   fclose(fp2);
   return 0;
 }
 
-BYTE proc(BYTE** imData,int rowNo,int colNo)
+RGBTRIPLE proc(RGBTRIPLE** imData,int rowNo,int colNo,int masksize)
 {
-  int masksize;
-  BYTE** MASK;
-  BYTE* sort;
-  BYTE pixel;
+ 
+  RGBTRIPLE** MASK;
+  RGBTRIPLE* sort;
+  RGBTRIPLE pixel;
   int x,y,count;
 
-  printf("Enter mask size:");
-  scanf("%d",&masksize);
+
   
-  MASK=(BYTE **)calloc(masksize,sizeof(BYTE));
+  MASK=(RGBTRIPLE **)malloc(masksize * sizeof(RGBTRIPLE *));
 
-  sort=(BYTE *)calloc(masksize*masksize,sizeof(BYTE));
+  sort=(RGBTRIPLE *)malloc( (masksize*masksize) * sizeof(RGBTRIPLE));
 
-  for(x=(int)(-(masksize/2));x<=(masksize/2);x++)
+  for(x=0;x<=(masksize-1);x++)
     {
-      MASK[x]=(BYTE *)calloc(masksize,sizeof(BYTE));
+      MASK[x]=(RGBTRIPLE *)malloc(masksize * sizeof(RGBTRIPLE));
     }
-  for(x=(int)(-(masksize/2));x<=(masksize/2);x++)
+  for(x = 0 ; x <= ( masksize -1 ) ; x++)
     {
-      for(y=(int)(-(masksize/2));y<=(masksize/2);y++)
+      for(y = 0 ; y <= ( masksize - 1 ) ; y++)
 	{
-	  MASK[x][y]=imData[rowNo+x][colNo+y];
+	  MASK[x][y]=imData[rowNo+(x-(int)(masksize/2))][colNo+(y-(int)(masksize/2))];
 	}
     }
   pixel=mediansort(MASK,sort,masksize);
@@ -192,32 +186,45 @@ BYTE proc(BYTE** imData,int rowNo,int colNo)
   return pixel;
 }
 
-BYTE mediansort(BYTE** MASK,char* sort,int masksize)
+RGBTRIPLE mediansort(RGBTRIPLE** MASK,RGBTRIPLE* sort,int masksize)
 {
-  BYTE medianvalue;
-  BYTE temp;
+  RGBTRIPLE medianvalue;
+  RGBTRIPLE temp;
   int x,y,count;
-
-  for(x=(int)(-(masksize/2));x<=(masksize/2);x++)
+  
+  count =0;
+  for(x=0;x<(masksize);x++)
     {
-      for(y=(int)(-(masksize/2));y<=(masksize/2);y++)
+      for(y=0;y<(masksize);y++)
 	{
 	  sort[count++]=MASK[x][y];
 	}
     }
   for(x=0;x<(masksize*masksize);x++)
     {
-      for(y=1;y<=((masksize*masksize)-1);y++)
+      for(y=0;y<((masksize*masksize)-1);y++)
 	{
-	  if(sort[y]<=sort[x])
+	  if(sort[y].rgbtRed>sort[x].rgbtRed)
 	    {
-	      sort[y]=temp;
-	      sort[y]=sort[x];
-	      sort[x]=temp;
+	      temp.rgbtRed=sort[y+1].rgbtRed;
+	      sort[y+1].rgbtRed=sort[y].rgbtRed;
+	      sort[y].rgbtRed=temp.rgbtRed;
+	    }
+	  if(sort[y].rgbtGreen>sort[x].rgbtGreen)
+	    {
+	      temp.rgbtGreen=sort[y+1].rgbtGreen;
+	      sort[y+1].rgbtGreen=sort[y].rgbtGreen;
+	      sort[y].rgbtGreen=temp.rgbtGreen;
+	    }
+	  if(sort[y].rgbtBlue>sort[x].rgbtBlue)
+	    {
+	      temp.rgbtBlue=sort[y+1].rgbtBlue;
+	      sort[y+1].rgbtBlue=sort[y].rgbtBlue;
+	      sort[y].rgbtBlue=temp.rgbtBlue;
 	    }
 	}
     }
-  medianvalue=sort[(masksize*masksize)/2];
+  medianvalue=sort[(int)((masksize*masksize)/2)];
   return medianvalue;
 }
 
@@ -443,8 +450,7 @@ int main(int argc,char **argv)
   image inImage;
   image outImage;
   int err;
-  FILE* fp1;
-  FILE* fp2;
+  
 
   
   if(argc!=3)
@@ -457,7 +463,7 @@ int main(int argc,char **argv)
   
   if((err=process(&inImage,&outImage,argv))!=0);
   {
-    if(err!=5)
+    if(err!=6)
       printf("\nUnexpected Result\n");
     exit(1);
   }
