@@ -105,30 +105,30 @@ int median(image* inImage,image* outImage,char** argv)
   fseek(fp1,0,SEEK_SET+(inImage->imOffset));
   fseek(fp2,0,SEEK_SET+(outImage->imOffset));
 
-  imRedData=imGreenData=imBlueData=(BYTE **)calloc((inImage->imHeight) + 2,sizeof(BYTE));
-
-  for(i=-1;i<(inImage->imHeight +1);i++)
+  imRedData=imGreenData=imBlueData=(BYTE **)farcalloc((inImage->imHeight) + 2,sizeof(BYTE));
+  printf("\n%ld\n",(inImage->imHeight)+2);
+  for(i=-1;i<=(inImage->imHeight +1);i++)
     {
-      imRedData[i]=imGreenData[i]=imBlueData[i]=(BYTE *)calloc((inImage->imWidth) +2,sizeof(BYTE));
+      imRedData[i]=imGreenData[i]=imBlueData[i]=(BYTE *)farcalloc((inImage->imWidth) +2,sizeof(BYTE));
     }
-
+ 
 
   for(i=-1;i<=inImage->imHeight+1;i++)
     {
       for(j=-1;j<=inImage->imWidth+1;j++)
 	{    
-	  if((i==-1 || i==inImage->imHeight+1 || j==-1 || j==inImage->imWidth+1))
+	  if((i==-1 || i==((inImage->imHeight)+1) || j==-1 || j==((inImage->imWidth)+1)))
 	    {
-	      (imRedData)[i][j]=0x00;
-	      (imGreenData)[i][j]=0x00;
-	      (imBlueData)[i][j]=0x00;
+	      imRedData[i][j]='0';
+	      imGreenData[i][j]='0';
+	      imBlueData[i][j]='0';
 	    }
 	  else
 	    {
 	      fread((BYTE *)&pixel,1,sizeof(RGBTRIPLE),fp1);
-	      (imRedData)[i][j]=pixel.rgbtRed;
-	      (imGreenData)[i][j]=pixel.rgbtGreen;
-	      (imBlueData)[i][j]=pixel.rgbtBlue;
+	      (imRedData)[i][j]=(pixel.rgbtRed);
+	      (imGreenData)[i][j]=(pixel.rgbtGreen);
+	      (imBlueData)[i][j]=(pixel.rgbtBlue);
 	    }
 
 	}
