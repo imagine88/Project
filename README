@@ -1,0 +1,26 @@
+Files:
+
+1.GPL: GNU General Public Licence -- Read Before Making changes and distributing
+
+2.header_struct.h : Header file containing structs for bmp headers.
+
+3.imagedata.h : Header file containing struct for image data.
+
+4.imagefunction.c : Functions for image enhancement/processing:
+					a.Convert color image to greyscale image
+                                        b.Perform average filtering
+                                        c.Perform median filtering
+
+5.imagemain.c : Main Function (program entry point)
+
+
+
+Note:
+
+1.The program was developed under GCC using standard ANSI library functions (should be platform independent)
+
+Future Releases :
+
+1.GUI 
+
+2.FTP transfer
