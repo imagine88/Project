@@ -19,8 +19,17 @@ Note:
 
 1.The program was developed under GCC using standard ANSI library functions (should be platform independent)
 
+2.Use the test images for output
+
+3.Command line usage
+
+  a.Compile: gcc -lm -g -o "executable file name" imagemain.c
+  b.Execute: ./"executable file name" "input_file_name.bmp" "output_file_name.bmp"
+
+
 Future Releases :
 
 1.GUI 
 
 2.FTP transfer
+
