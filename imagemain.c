@@ -1,0 +1,30 @@
+#include "imagefunction.c"
+  
+int main(int argc,char **argv)
+{
+  image inImage;
+  image outImage;
+  int err;
+  
+  if(argc!=3)
+    {
+      printf("Insufficient arguments\nUsage:./progname infile\n");
+      exit(1);
+    }
+
+  if((err=process(&inImage,&outImage,argv))!=SUCCESS)
+  {
+    if(err!=EXIT)
+      printf("\nError\n");
+    exit(1);
+  }
+  
+  return SUCCESS;
+}
+
+
+
+
+
+      
+
