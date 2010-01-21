@@ -1,7 +1,7 @@
 #include "imagedata.h"
 #define SUCCESS 0
 #define EXIT 4
-#define masksize 3
+#define masksize 5
 
 
 /*********************************************
@@ -131,15 +131,15 @@ int readpixel(RGBTRIPLE** imRawData,image* inImage,FILE* fp1)
   int i,j;
   RGBTRIPLE pixel;
 
-  for(i=0;i<=( (inImage->imHeight) + 2 );i++)
+  for(i=0;i<( (inImage->imHeight) + (masksize -1));i++)
     {
-      for(j=0;j<=((inImage->imWidth)+2);j++)
+      for(j=0;j<((inImage->imWidth)+(masksize -1));j++)
 	{    
-	  if(((i==0 || i==((inImage->imHeight)+2))))
+	  if(((i<((int)(masksize/2)) || i>=((inImage->imHeight)+((int)(masksize/2))))))
 	    {
 	      imRawData[i][j].rgbtRed=imRawData[i][j].rgbtGreen=imRawData[i][j].rgbtBlue=0;
 	    }
-	  else if(((j==0 || j==((inImage->imWidth)+2))))
+	  else if(((j<((int)(masksize/2)) || j>=((inImage->imWidth)+((int)(masksize/2))))))
 	    {
 	      imRawData[i][j].rgbtRed=imRawData[i][j].rgbtGreen=imRawData[i][j].rgbtBlue=0;
 	    }
@@ -169,8 +169,6 @@ int readpixel(RGBTRIPLE** imRawData,image* inImage,FILE* fp1)
 
 int averaging(image* inImage,image* outImage,char** argv)
 {
-  BITMAPFILEHEADER bmfh;
-  BITMAPINFOHEADER bmih;
   RGBTRIPLE pixel;
   int i,j,err;
   FILE* fp1;
@@ -193,29 +191,30 @@ int averaging(image* inImage,image* outImage,char** argv)
   fseek(fp1,0,SEEK_SET+(inImage->imOffset));
   fseek(fp2,0,SEEK_SET+(outImage->imOffset));
 
-  imRawData=(RGBTRIPLE **)malloc(((inImage->imHeight)+2) * sizeof(RGBTRIPLE *));
+  imRawData=(RGBTRIPLE **)malloc(((inImage->imHeight)+(masksize - 1)) * sizeof(RGBTRIPLE *));
+  
+  for(i=0;i<( (inImage->imHeight) +(masksize - 1));i++)
+    {
+      imRawData[i]=(RGBTRIPLE *)malloc(((inImage->imWidth)+(masksize - 1)) * sizeof(RGBTRIPLE));
+    }
   
   if((err=readpixel(imRawData,inImage,fp1))!=0)
     {
       printf("Error Reading Pixel Data\n");
       exit(1);
     }
+
   
-  for(i=0;i<( (inImage->imHeight) +2);i++)
+  for(i=((int)(masksize/2));i<((inImage->imHeight)+((int)(masksize/2)));i++)
     {
-      imRawData[i]=(RGBTRIPLE *)malloc(((inImage->imWidth)+2) * sizeof(RGBTRIPLE));
-    }
-  
-  for(i=1;i<=(inImage->imHeight);i++)
-    {
-      for(j=1;j<=(inImage->imWidth);j++)
+      for(j=((int)(masksize/2));j<((inImage->imWidth)+((int)(masksize/2)));j++)
 	{
 	  pixel= averagingprocess(imRawData,i,j);
 	  fwrite((BYTE *)&pixel,1,sizeof(RGBTRIPLE),fp2);
 	}
     }
 
-  for(i=0;i<((inImage->imHeight) + 2);i++)
+  for(i=0;i<((inImage->imHeight) + (masksize - 1));i++)
     {
       free((imRawData)[i]);
     }
@@ -322,11 +321,11 @@ int median(image* inImage,image* outImage,char** argv)
   fseek(fp1,0,SEEK_SET+(inImage->imOffset));
   fseek(fp2,0,SEEK_SET+(outImage->imOffset));
 
-  imRawData=(RGBTRIPLE **)malloc(((inImage->imHeight)+2) * sizeof(RGBTRIPLE *));
-    
-  for(i=0;i<=( (inImage->imHeight) +2);i++)
+  imRawData=(RGBTRIPLE **)malloc(((inImage->imHeight)+(masksize - 1)) * sizeof(RGBTRIPLE *));
+  
+  for(i=0;i<( (inImage->imHeight) +(masksize - 1));i++)
     {
-      imRawData[i]=(RGBTRIPLE *)malloc(((inImage->imWidth)+2) * sizeof(RGBTRIPLE));
+      imRawData[i]=(RGBTRIPLE *)malloc(((inImage->imWidth)+(masksize - 1)) * sizeof(RGBTRIPLE));
     }
  
   if((err=readpixel(imRawData,inImage,fp1))!=0)
@@ -335,9 +334,9 @@ int median(image* inImage,image* outImage,char** argv)
       exit(1);
     }
 
-  for(i=1;i<=(inImage->imHeight)+1;i++)
+  for(i=((int)(masksize/2));i<((inImage->imHeight)+((int)(masksize/2)));i++)
     {
-      for(j=1;j<=(inImage->imWidth)+1;j++)
+      for(j=((int)(masksize/2));j<((inImage->imWidth)+((int)(masksize/2)));j++)
 	{
 	  pixel= medianprocess(imRawData,i,j);
 	  fwrite((BYTE *)&pixel,1,sizeof(RGBTRIPLE),fp2);
