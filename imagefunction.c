@@ -1,7 +1,7 @@
 #include "imagedata.h"
 #define SUCCESS 0
-#define EXIT 4
-#define masksize 5
+#define EXIT 5
+#define masksize 3
 
 
 /*********************************************
@@ -20,6 +20,8 @@ RGBTRIPLE medianprocess(RGBTRIPLE** ,int ,int );
 RGBTRIPLE mediansort(RGBTRIPLE** ,RGBTRIPLE* );
 int averaging(image*,image*,char**);
 RGBTRIPLE averagingprocess(RGBTRIPLE** ,int ,int );
+int sharpening(image*,image*,char**);
+RGBTRIPLE sharpeningprocess(RGBTRIPLE** ,int ,int );
 int convgs(image*,image*,char**);
 
 /*--------------------------------------------------------*/
@@ -41,7 +43,7 @@ int process(image* inImage,image* outImage,char** argv)
 
   do
     {
-      printf("\n1.Convert To Grey Scale\n2.Median Filter\n3.Averaging Filter\n4.Exit\n");
+      printf("\n1.Convert To Grey Scale\n2.Median Filter\n3.Averaging Filter\n4.Sharpening\n5.Exit\n");
       printf("Choice:");
       scanf("%d",&choice);
       switch(choice)
@@ -67,14 +69,21 @@ int process(image* inImage,image* outImage,char** argv)
 	      printf("Error Encountered\n");
 	      exit(1);
 	    }
-	      break;
+	  break;
+	case 4:
+	  if((err=sharpening(inImage,outImage,argv))!=SUCCESS)
+	    {
+	      printf("Error Encountered\n");
+	      exit(1);
+	    }
+	  break;
 	default:
-	  if(choice==4)
+	  if(choice==EXIT)
 	    return EXIT;
 	  else
 	    printf("Re-enter Choice\n");
 	}
-    }while(choice!=4);
+    }while(choice!=EXIT);
  
  return SUCCESS;
 }
@@ -259,21 +268,12 @@ RGBTRIPLE averagingprocess(RGBTRIPLE** imData,int rowNo,int colNo)
 
   if(Red>=255)
     Red=255;
-  
-  if(Red<=0)
-    Red=0;
-
+ 
   if(Green>=255)
     Green=255;
 
-  if(Green<=0)
-    Green=0;
-
   if(Blue>=255)
     Blue=255;
-
-  if(Blue<=0)
-    Blue=0x00; 
 
   average.rgbtRed=(BYTE)(Red);
   average.rgbtGreen=(BYTE)(Green);
@@ -484,3 +484,140 @@ int convgs(image* inImage,image* outImage,char** argv)
 }
 
 /*--------------------------------------------------------*/
+
+
+
+/*********************************************
+ *         Function:Sharpening Filter        *
+ *             (SPATIAL - With Laplacian     *
+ *                       Mask)               *
+ *********************************************/
+
+/*--------------------------------------------------------*/
+
+int sharpening(image* inImage,image* outImage,char** argv)
+{
+  RGBTRIPLE pixel;
+  int i,j,err;
+  FILE* fp1;
+  FILE* fp2;
+  RGBTRIPLE** imRawData;
+
+  fp1=fopen(argv[1],"rb");
+  fp2=fopen(argv[2],"wb");
+
+ 
+  inImage->imName=(BYTE *)argv[1];
+  outImage->imName=(BYTE *)argv[2];
+  
+  if((err=copyheader(inImage,outImage,fp1,fp2)!=0))
+    {
+      printf("Error Copying Header\n");
+      exit(1);
+    }
+
+  fseek(fp1,0,SEEK_SET+(inImage->imOffset));
+  fseek(fp2,0,SEEK_SET+(outImage->imOffset));
+
+  imRawData=(RGBTRIPLE **)malloc(((inImage->imHeight)+(masksize - 1)) * sizeof(RGBTRIPLE *));
+  
+  for(i=0;i<( (inImage->imHeight) +(masksize - 1));i++)
+    {
+      imRawData[i]=(RGBTRIPLE *)malloc(((inImage->imWidth)+(masksize - 1)) * sizeof(RGBTRIPLE));
+    }
+  
+  if((err=readpixel(imRawData,inImage,fp1))!=0)
+    {
+      printf("Error Reading Pixel Data\n");
+      exit(1);
+    }
+
+  
+  for(i=((int)(masksize/2));i<((inImage->imHeight)+((int)(masksize/2)));i++)
+    {
+      for(j=((int)(masksize/2));j<((inImage->imWidth)+((int)(masksize/2)));j++)
+	{
+	  pixel= sharpeningprocess(imRawData,i,j);
+	  fwrite((BYTE *)&pixel,1,sizeof(RGBTRIPLE),fp2);
+	}
+    }
+
+  for(i=0;i<((inImage->imHeight) + (masksize - 1));i++)
+    {
+      free((imRawData)[i]);
+    }
+
+  free((imRawData));
+  fclose(fp1);
+  fclose(fp2);
+
+  return SUCCESS;
+}
+
+RGBTRIPLE sharpeningprocess(RGBTRIPLE** imData,int rowNo,int colNo)
+{
+ 
+  RGBTRIPLE** MASK;
+  int x,y,count;
+  RGBTRIPLE weighted;
+  int Red=0;
+  int Green=0;
+  int Blue=0;
+  
+  MASK=(RGBTRIPLE **)malloc(masksize * sizeof(RGBTRIPLE *));
+
+  for(x=0;x<=(masksize-1);x++)
+    {
+      MASK[x]=(RGBTRIPLE *)malloc(masksize * sizeof(RGBTRIPLE));
+    }
+  for(x = 0 ; x <= ( masksize -1 ) ; x++)
+    {
+      for(y = 0 ; y <= ( masksize - 1 ) ; y++)
+	{
+	  MASK[x][y]=imData[rowNo+(x-(int)(masksize/2))][colNo+(y-(int)(masksize/2))];
+	  if(x==(int)(masksize/2) && y==(int)(masksize/2))
+	    {
+	      Red=Red + ( 8 * MASK[x][y].rgbtRed );
+	      Green=Green + ( 8 * MASK[x][y].rgbtGreen );
+	      Blue=Blue + ( 8 * MASK[x][y].rgbtBlue );
+	    }
+	  else
+	    {
+	      Red=Red -  MASK[x][y].rgbtRed ;
+	      Green=Green - MASK[x][y].rgbtGreen ;
+	      Blue=Blue  - MASK[x][y].rgbtBlue ;
+	    }
+	}
+    }
+ 
+  if(Red>=255)
+    Red=255;
+ 
+  if(Green>=255)
+    Green=255;
+
+  if(Blue>=255)
+    Blue=255;
+
+  if(Red<=0)
+    Red=0;
+
+  if(Green<=0)
+    Green=0;
+
+  if(Blue<=0)
+    Blue=0;
+
+  weighted.rgbtRed=(BYTE)(Red);
+  weighted.rgbtGreen=(BYTE)(Green);
+  weighted.rgbtBlue=(BYTE)(Blue);
+
+  for(x=0;x<(masksize);x++)
+    free(MASK[x]);
+
+  free(MASK);
+  return weighted;
+}
+
+/*--------------------------------------------------------*/
+
